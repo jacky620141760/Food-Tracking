@@ -1,0 +1,19 @@
+# Legacy folder name (remove after migration)
+haelf-nutrition/
+
+# App dependencies and build output
+food-tracking/node_modules/
+food-tracking/.expo/
+food-tracking/dist/
+food-tracking/web-build/
+
+# Local secrets
+food-tracking/.env
+food-tracking/.env.*
+!food-tracking/.env.example
+!food-tracking/.env.*.example
+
+# OS and IDE
+.DS_Store
+Thumbs.db
+.idea/

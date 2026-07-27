@@ -1,0 +1,76 @@
+{
+  "expo": {
+    "name": "Food Tracking",
+    "slug": "food-tracking",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "foodtracking",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "用於掃描食品條碼與拍攝食物照片以供 AI 分析。",
+        "NSPhotoLibraryUsageDescription": "用於選擇食物照片以供 AI 分析。"
+      },
+      "bundleIdentifier": "com.food.tracking"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F4EF",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "permissions": ["CAMERA"],
+      "package": "com.food.tracking"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "headers": {
+            "Cross-Origin-Embedder-Policy": "credentialless",
+            "Cross-Origin-Opener-Policy": "same-origin"
+          }
+        }
+      ],
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "允許 Food Tracking 讀取步數，以在健康習慣中顯示當日計步進度。"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "用於掃描食品條碼與拍攝食物照片。"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "用於選擇食物照片以供 AI 分析。"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#F7F4EF"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
