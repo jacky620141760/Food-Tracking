@@ -7,11 +7,19 @@ food-tracking/.expo/
 food-tracking/dist/
 food-tracking/web-build/
 
-# Local secrets
+# Local secrets — NEVER commit (API keys, tokens)
 food-tracking/.env
 food-tracking/.env.*
 !food-tracking/.env.example
 !food-tracking/.env.*.example
+
+# Local SQLite database — stays on device only
+food-tracking/*.db
+food-tracking/*.db-journal
+food-tracking/*.db-wal
+food-tracking/*.db-shm
+food-tracking/*.sqlite
+food-tracking/*.sqlite3
 
 # OS and IDE
 .DS_Store

@@ -48,11 +48,14 @@ pnpm-debug.log*
 *.mobileprovision
 *.cer
 
-# Local databases and temporary files
+# Local SQLite database — device-only, never push to Git
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
+haelf_nutrition.db
 *.tmp
 *.temp
 *.swp
