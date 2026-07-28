@@ -4,6 +4,7 @@ import { theme } from '@/src/theme';
 import { SectionTitle, MfpCard, PrimaryButton } from '@/src/components/ui';
 import { useApp } from '@/src/context/AppContext';
 import { useAuth } from '@/src/context/AuthContext';
+import { notify } from '@/src/services/dialog';
 
 function Row({ label, onPress, hint }: { label: string; onPress: () => void; hint?: string }) {
   return (
@@ -23,7 +24,22 @@ function Row({ label, onPress, hint }: { label: string; onPress: () => void; hin
 export default function MoreScreen() {
   const router = useRouter();
   const { isWeb, preferences, updatePreferences, t } = useApp();
-  const { user, signOutUser, lastSyncError, syncNow } = useAuth();
+  const { user, signOutUser, lastSyncError, syncNow, syncing } = useAuth();
+
+  const onSyncNow = async () => {
+    const result = await syncNow();
+    if (result.ok) {
+      notify(t('auth.syncDone'));
+      return;
+    }
+    const message =
+      result.message === 'Not signed in'
+        ? t('auth.syncNotSignedIn')
+        : result.message === 'Supabase is not configured'
+          ? t('auth.syncNotConfigured')
+          : result.message;
+    notify(t('common.retry'), message);
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -38,7 +54,11 @@ export default function MoreScreen() {
         <Text style={styles.accountLabel}>{t('auth.account')}</Text>
         <Text style={styles.accountEmail}>{user?.email ?? t('common.unknown')}</Text>
         {lastSyncError ? <Text style={styles.syncError}>{lastSyncError}</Text> : null}
-        <PrimaryButton label={t('auth.syncNow')} onPress={() => void syncNow()} />
+        <PrimaryButton
+          label={syncing ? t('auth.syncing') : t('auth.syncNow')}
+          onPress={() => void onSyncNow()}
+          disabled={syncing}
+        />
         <View style={{ height: theme.space.sm }} />
         <PrimaryButton
           label={t('auth.signOut')}

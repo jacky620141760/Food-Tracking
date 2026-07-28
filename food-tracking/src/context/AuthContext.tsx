@@ -20,7 +20,12 @@ import {
   signUpWithEmail,
   supabase,
 } from '../services/auth/client';
-import { awaitSyncIdle, prepareAccountForSync, runFullSync } from '../services/sync/engine';
+import {
+  awaitSyncIdle,
+  prepareAccountForSync,
+  runFullSync,
+  type SyncResult,
+} from '../services/sync/engine';
 import { setSyncRunner } from '../services/sync/scheduler';
 import { hasOngoingGoals } from '../db/repositories/goals';
 import { clearAllAppTables } from '../db/database';
@@ -52,7 +57,7 @@ type AuthContextValue = {
   signInGuest: () => Promise<{ ok: true } | { ok: false; message: string }>;
   signOutUser: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<{ ok: true } | { ok: false; message: string }>;
-  syncNow: () => Promise<void>;
+  syncNow: () => Promise<SyncResult | { ok: false; message: string }>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -88,21 +93,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const syncNow = useCallback(async () => {
+  const syncNow = useCallback(async (): Promise<SyncResult | { ok: false; message: string }> => {
     const userId = session?.user?.id;
-    if (!userId || !isSupabaseConfigured()) return;
-    // Avoid overlapping bindAccount wipe + background sync.
+    if (!userId) return { ok: false, message: 'Not signed in' };
+    if (!isSupabaseConfigured()) {
+      return { ok: false, message: 'Supabase is not configured' };
+    }
+    // Wait for account bind (may wipe + initial pull) before manual sync.
     if (bindInFlight.current) {
       await bindInFlight.current;
-      return;
     }
     setSyncing(true);
     setLastSyncError(null);
-    const result = await runFullSync(userId);
-    if (!result.ok) setLastSyncError(result.message);
-    else await reloadFromDb();
-    await refreshOnboardingGate();
-    setSyncing(false);
+    try {
+      const result = await runFullSync(userId);
+      if (!result.ok) {
+        setLastSyncError(result.message);
+        return result;
+      }
+      await reloadFromDb();
+      await refreshOnboardingGate();
+      return result;
+    } finally {
+      setSyncing(false);
+    }
   }, [session?.user?.id, refreshOnboardingGate, reloadFromDb]);
 
   const bindAccount = useCallback(
@@ -147,7 +161,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       autoSyncReady.current = false;
       return;
     }
-    setSyncRunner(syncNow);
+    setSyncRunner(async () => {
+      await syncNow();
+    });
     return () => setSyncRunner(null);
   }, [session?.user, syncNow]);
 

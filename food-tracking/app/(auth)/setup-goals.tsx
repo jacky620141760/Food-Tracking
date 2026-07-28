@@ -1,28 +1,32 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useApp } from '@/src/context/AppContext';
-import { saveBodyPlan } from '@/src/db/repositories/bodyPlan';
-import { upsertOngoingGoals } from '@/src/db/repositories/goals';
-import { upsertOngoingWaterGoal } from '@/src/db/repositories/water';
-import { createWeightEntry } from '@/src/db/repositories/weight';
+import { getBodyPlan, saveBodyPlan } from '@/src/db/repositories/bodyPlan';
+import { getOngoingGoals, upsertOngoingGoals } from '@/src/db/repositories/goals';
+import {
+  listWaterGoalVersions,
+  upsertOngoingWaterGoal,
+} from '@/src/db/repositories/water';
+import { createWeightEntry, getLatestWeightOnOrBefore } from '@/src/db/repositories/weight';
 import {
   WeightPlanFields,
+  bodyPlanToForm,
   parseBodyPlanForm,
   type BodyPlanFormState,
 } from '@/src/components/goals/WeightPlanFields';
 import type { NutritionSuggestion } from '@/src/domain/tdee';
 import { getTimeZoneMetadata, toLocalDateString, utcNowIso } from '@/src/domain/dates';
 import { parseFiniteNumber, validateGoalNutrients } from '@/src/domain/validation';
-import { isValidWaterMl } from '@/src/domain/water';
+import { isValidWaterMl, resolveWaterGoalForDate } from '@/src/domain/water';
 import { NutritionInputFields } from '@/src/components/nutrition/NutritionInputFields';
 import { useLinkedMacroKcal } from '@/src/hooks/useLinkedMacroKcal';
 import { Field, PrimaryButton, SectionTitle } from '@/src/components/ui';
 import { theme } from '@/src/theme';
 
 export default function SetupGoalsScreen() {
-  const { t, bumpRefresh } = useApp();
+  const { t, bumpRefresh, todayLocalDate } = useApp();
   const { session, needsGoalsSetup, refreshOnboardingGate, syncNow, needsAiSetup, needsStepsSetup } =
     useAuth();
   const router = useRouter();
@@ -42,6 +46,48 @@ export default function SetupGoalsScreen() {
     tdeeKcal: '',
   });
   const [suggestion, setSuggestion] = useState<NutritionSuggestion | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const effectiveDate = todayLocalDate || toLocalDateString();
+      const [ongoing, waterVersions, plan, latestWeight] = await Promise.all([
+        getOngoingGoals(),
+        listWaterGoalVersions(),
+        getBodyPlan(),
+        getLatestWeightOnOrBefore(effectiveDate),
+      ]);
+      const waterGoal = resolveWaterGoalForDate(waterVersions, effectiveDate);
+      if (waterGoal) setWater(String(waterGoal.ml));
+      if (ongoing) {
+        nutrients.setValues({
+          kcal: String(ongoing.kcal),
+          protein: String(ongoing.proteinG),
+          fat: String(ongoing.fatG),
+          carbs: String(ongoing.carbsG),
+          mode: 'linked',
+        });
+      }
+      const form = bodyPlanToForm(plan);
+      if (!form.currentWeight && latestWeight) {
+        form.currentWeight = String(latestWeight.kg);
+      }
+      setPlanForm(form);
+      if (
+        plan.sex &&
+        plan.ageYears &&
+        plan.heightCm &&
+        plan.activityLevel &&
+        plan.currentWeightKg &&
+        plan.targetWeightKg &&
+        plan.planWeeks
+      ) {
+        const parsed = parseBodyPlanForm(form, t('common.required'), t('validation.outOfRange'));
+        if (parsed.ok) setSuggestion(parsed.suggestion);
+      }
+    })();
+    // Load once on mount; nutrients.setValues is stable for this screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayLocalDate, t]);
 
   const planLabels = useMemo(
     () => ({

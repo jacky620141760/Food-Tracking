@@ -180,6 +180,9 @@ export const en = {
     onboardingStep: 'Step {{current}} of {{total}}',
     syncNow: 'Sync now',
     syncing: 'Syncing…',
+    syncDone: 'Cloud sync completed',
+    syncNotSignedIn: 'Sign in before syncing',
+    syncNotConfigured: 'Supabase is not configured',
   },
   weight: {
     title: 'Weight',

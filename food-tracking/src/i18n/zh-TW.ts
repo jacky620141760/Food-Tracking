@@ -188,6 +188,9 @@ export const zhTW = {
     onboardingStep: '步驟 {{current}}／{{total}}',
     syncNow: '立即同步',
     syncing: '同步中…',
+    syncDone: '已與雲端同步完成',
+    syncNotSignedIn: '請先登入後再同步',
+    syncNotConfigured: 'Supabase 未設定，無法同步',
   },
   weight: {
     title: '體重',
