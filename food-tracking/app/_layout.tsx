@@ -44,7 +44,7 @@ function Gate({ children }: { children: React.ReactNode }) {
 }
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { loading, session, needsGoalsSetup, needsAiSetup, needsStepsSetup } = useAuth();
+  const { loading, session, configured, needsGoalsSetup, needsAiSetup, needsStepsSetup } = useAuth();
   const segments = useSegments() as string[];
   const inAuth = segments[0] === '(auth)';
   const screen = segments[1];
@@ -58,7 +58,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!session && !inAuth) {
+  // Cloud authentication is optional. Without cloud configuration, continue with
+  // the on-device SQLite store instead of forcing an unusable login screen.
+  if (!session && configured && !inAuth) {
     return <Redirect href="/(auth)/login" />;
   }
 

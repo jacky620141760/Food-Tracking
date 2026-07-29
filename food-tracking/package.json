@@ -1,6 +1,6 @@
 {
   "name": "food-tracking",
-  "description": "Food Tracking — offline-first nutrition and health diary built with Expo and Supabase.",
+  "description": "Food Tracking — an open-source, local-first nutrition and health diary built with Expo and SQLite.",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "license": "MIT",
