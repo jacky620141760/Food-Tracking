@@ -51,7 +51,11 @@ export default function LoginScreen() {
           secureTextEntry
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <PrimaryButton label={busy ? t('common.loading') : t('auth.login')} onPress={onSubmit} />
+        <PrimaryButton
+          label={busy ? t('common.loading') : t('auth.login')}
+          onPress={onSubmit}
+          disabled={busy || !configured}
+        />
         {GUEST_LOGIN_ENABLED ? (
           <MfpButton
             label={busy ? t('common.loading') : t('auth.guestLogin')}

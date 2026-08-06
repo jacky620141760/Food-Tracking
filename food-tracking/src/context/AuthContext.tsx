@@ -167,27 +167,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => setSyncRunner(null);
   }, [session?.user, syncNow]);
 
+  // Never call Supabase DB/auth APIs inside onAuthStateChange — auth-js holds an
+  // exclusive lock while notifying subscribers; nested client calls deadlock and
+  // leave signIn/signOut hanging forever (common after sign-out → sign-in).
   useEffect(() => {
     let mounted = true;
     (async () => {
       const current = await getSession();
       if (!mounted) return;
       setSession(current);
-      if (current?.user) {
-        await bindAccount(current.user.id);
-      } else {
+      if (!current?.user) {
         setNeedsGoalsSetup(false);
         setNeedsAiSetup(false);
         setNeedsStepsSetup(false);
+        setLoading(false);
       }
-      if (mounted) setLoading(false);
+      // Signed-in bootstrap: loading clears after bindAccount in the effect below.
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
-      if (next?.user) {
-        void bindAccount(next.user.id);
-      } else {
+      if (!next?.user) {
         bindUserId.current = null;
         setNeedsGoalsSetup(false);
         setNeedsAiSetup(false);
@@ -199,7 +199,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       sub.subscription.unsubscribe();
     };
-  }, [bindAccount]);
+  }, []);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        await bindAccount(userId);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id, bindAccount]);
 
   useEffect(() => {
     if (!session?.user) {

@@ -147,6 +147,7 @@ export const zhTW = {
   },
   auth: {
     account: '帳號',
+    signedOut: '尚未登入',
     loginTitle: '登入',
     loginSubtitle: '登入後可跨裝置同步營養資料。',
     registerTitle: '建立帳號',

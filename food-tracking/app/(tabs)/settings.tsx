@@ -24,7 +24,7 @@ function Row({ label, onPress, hint }: { label: string; onPress: () => void; hin
 export default function MoreScreen() {
   const router = useRouter();
   const { isWeb, preferences, updatePreferences, t } = useApp();
-  const { user, signOutUser, lastSyncError, syncNow, syncing } = useAuth();
+  const { user, configured, signOutUser, lastSyncError, syncNow, syncing } = useAuth();
 
   const onSyncNow = async () => {
     const result = await syncNow();
@@ -52,24 +52,34 @@ export default function MoreScreen() {
 
       <MfpCard>
         <Text style={styles.accountLabel}>{t('auth.account')}</Text>
-        <Text style={styles.accountEmail}>{user?.email ?? t('common.unknown')}</Text>
-        {lastSyncError ? <Text style={styles.syncError}>{lastSyncError}</Text> : null}
-        <PrimaryButton
-          label={syncing ? t('auth.syncing') : t('auth.syncNow')}
-          onPress={() => void onSyncNow()}
-          disabled={syncing}
-        />
-        <View style={{ height: theme.space.sm }} />
-        <PrimaryButton
-          label={t('auth.signOut')}
-          danger
-          onPress={() =>
-            Alert.alert(t('auth.signOut'), t('auth.signOutKeepLocal'), [
-              { text: t('common.cancel'), style: 'cancel' },
-              { text: t('auth.signOut'), style: 'destructive', onPress: () => void signOutUser() },
-            ])
-          }
-        />
+        <Text style={styles.accountEmail}>{user?.email ?? t('auth.signedOut')}</Text>
+        {!configured ? <Text style={styles.syncError}>{t('auth.notConfigured')}</Text> : null}
+        {user ? (
+          <>
+            {lastSyncError ? <Text style={styles.syncError}>{lastSyncError}</Text> : null}
+            <PrimaryButton
+              label={syncing ? t('auth.syncing') : t('auth.syncNow')}
+              onPress={() => void onSyncNow()}
+              disabled={syncing}
+            />
+            <View style={{ height: theme.space.sm }} />
+            <PrimaryButton
+              label={t('auth.signOut')}
+              danger
+              onPress={() =>
+                Alert.alert(t('auth.signOut'), t('auth.signOutKeepLocal'), [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  { text: t('auth.signOut'), style: 'destructive', onPress: () => void signOutUser() },
+                ])
+              }
+            />
+          </>
+        ) : (
+          <PrimaryButton
+            label={t('auth.login')}
+            onPress={() => router.push('/(auth)/login')}
+          />
+        )}
       </MfpCard>
 
       <MfpCard>

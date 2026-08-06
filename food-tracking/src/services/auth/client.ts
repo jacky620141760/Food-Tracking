@@ -125,7 +125,11 @@ export async function signInAsGuest(): Promise<AuthResult> {
 }
 
 export async function signOut(): Promise<void> {
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+  // Global revoke can hang or fail offline; always clear local session so login works again.
+  if (error) {
+    await supabase.auth.signOut({ scope: 'local' });
+  }
 }
 
 export async function resetPassword(email: string): Promise<{ ok: true } | { ok: false; message: string }> {

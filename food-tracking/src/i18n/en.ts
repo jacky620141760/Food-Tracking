@@ -136,6 +136,7 @@ export const en = {
   },
   auth: {
     account: 'Account',
+    signedOut: 'Not signed in',
     loginTitle: 'Sign in',
     loginSubtitle: 'Sign in to sync your nutrition data across devices.',
     registerTitle: 'Create account',
